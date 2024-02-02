@@ -13,7 +13,7 @@ output-list RAM[0]%D2.6.2 RAM[1]%D2.6.2 RAM[2]%D2.6.2;
 set RAM[0] 0,   // sets test arguments
 set RAM[1] 0,
 set RAM[2] -1;  // tests that product was initialized to 0
-repeat 20 {
+repeat 30 {
   ticktock;
 }
 set RAM[0] 0,   // restores the arguments in case the program used them
