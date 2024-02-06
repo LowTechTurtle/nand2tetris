@@ -32,25 +32,64 @@ CHIP CPU {
         pc[15];          // Address of next instruction
 
     PARTS:
-        Mux16(a=instruction, b=ALUout, sel=instruction[0], out=ARegisIn);
-        Mux16(a=ARegisout, b=inM, sel=instruction[3], out=yALU);
+    // A Register will either get input from ALU(command that output to A Register) or A instruction
+        Mux16(a=instruction, b=ALUout, sel=instruction[15], out=ARegisIn); //Mux for A Register
 
-        ARegister(in=ARegisIn, load=instruction[10], out=ARegisout, out[0..14]=addressM, out[15]=false);
-        DRegister(in=ALUout, load=instruction[11], out=xALU);
+    // ALU will get input from 2 source: D register and A register or input from data memory, this Mux decide
+    // whether A regis or RAM will be the second source of input
+        Mux16(a=ARegisout, b=inM, sel=instruction[12], out=yALU); //Mux for ALU
 
-        ALU(x=xALU, y=yALU, zx=instruction[4], nx=instruction[5], zy=instruction[6],
-             ny=instruction[7], f=instruction[8], no=instruction[9],
+    // A Register will load if a) instruction is A instruction 
+    //                         b) instruction is C instruction and ALU specify that its result should be stored in A Register
+        Not(in=instruction[15], out=notopcode);
+        And(a=instruction[15], b=instruction[5], out=loadifcins);
+        Or(a=notopcode, b=loadifcins, out=Aregisload);
+        ARegister(in=ARegisIn, load=Aregisload, out=ARegisout, out[0..14]=addressM);
+    // D Regeister will load if instruction is C instruction and ALU specify that its result should be stored in D Register
+        And(a=instruction[4], b=instruction[15], out=DRegisload);
+        DRegister(in=ALUout, load=DRegisload, out=xALU);
+
+        ALU(x=xALU, y=yALU, zx=instruction[11], nx=instruction[10], zy=instruction[9],
+             ny=instruction[8], f=instruction[7], no=instruction[6],
               out=ALUout, out=outM, zr=zr, ng=ng);
 
-        And(a=ng, b=instruction[13], out=j1);
-        And(a=zr, b=instruction[14], out=j2);
+    // deal with jump
+    // the following code is going to make PC go crazy and fetch the wrong instruction, therefore, all tests will fail
+    // in computer tests but will not fail in CPU tests(lol)
+    /*    And(a=ng, b=instruction[2], out=j1);
+        And(a=zr, b=instruction[1], out=j2);
         Not(in=ng, out=notng);
         Not(in=zr, out=notzr);
         And(a=notng, b=notzr, out=notngAndnotzr);
-        And(a=notngAndnotzr, b=instruction[15], out=j3);
+        And(a=notngAndnotzr, b=instruction[0], out=j3helper);
+        And(a=j3helper, b=instruction[15], out=j3);
         Or(a=j1, b=j2, out=j12);
         Or(a=j12, b=j3, out=j123);
-        Not(in=j123, out=incload);
-        PC(in=ARegisout, load=j123, inc=incload, reset=reset, out[0..14]=pc[0..14], out[15]=false);
-        And(a=instruction[0], b=instruction[12], out=writeM);
+        */
+    // and the code below wont fail
+    And(a = instruction[15], b = instruction[0], out = isGT);
+    And(a = instruction[15], b = instruction[1], out = isEQ);
+    And(a = instruction[15], b = instruction[2], out = isLT);
+
+    And(a = ng, b = isLT, out = isLtJump);
+    And(a = zr, b = isEQ, out = isEqJump);
+
+    Not(in = ng, out = notNg);
+    Not(in = zr, out = notZr);
+    And(a = notNg, b = notZr, out = isOutGt);
+    
+    And(a = isOutGt, b = isGT, out = isGtJump);
+
+    Or(a = isLtJump, b = isEqJump, out = isJump);
+    Or(a = isJump, b = isGtJump, out = jump);
+    /** here is why: the latter piece of code make sure that the instruction is a C instruction,
+    because in case of an A instruction, the first 3 bits will not stand for jump condition, so
+    the behavior is undefined(it will depend on the address of the A instruction).
+    Furthermore, the ALU still output the old computation of the previous C instruction 
+    */
+
+    // if C instruction: if not jump then PC will increment
+    // if A instruction: will not increment
+        PC(in=ARegisout, load=jump, inc=true, reset=reset, out[0..14]=pc);
+        And(a=instruction[15], b=instruction[3], out=writeM);
 }
