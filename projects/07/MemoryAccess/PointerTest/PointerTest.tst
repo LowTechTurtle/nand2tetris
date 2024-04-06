@@ -11,7 +11,7 @@ compare-to PointerTest.cmp,
 
 set RAM[0] 256,   // initializes the stack pointer
 
-repeat 450 {      // enough cycles to complete the execution
+repeat 100 {      // enough cycles to complete the execution
   ticktock;
 }
 
