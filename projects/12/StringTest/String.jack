@@ -14,51 +14,117 @@ class String {
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
+    field Array str;
+    field int len;
+
     constructor String new(int maxLength) {
+        if (maxLength = 0) {
+            let len = 0;
+            return this;
+        }
+        let len = 0;
+        let str = Memory.alloc(maxLength);
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        do Memory.deAlloc(this);
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return len;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return str[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let str[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        let str[len] = c;
+        let len = len + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        let str[len-1] = null;
+        let len = len - 1;
+        return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int i, value, neg;
+        let i = 0;
+        let value = 0;
+        let neg = 0;
+        if (str[0] = 45) {
+            let neg = 1;
+            let i = i + 1;
+        }
+        while (i < len) {
+            let value = value * 10;
+            let value = value + str[i] - 48;
+            let i = i + 1;
+        }
+        if (neg = 1) {
+            return -value;
+        } else {
+            return value;
+        }
     }
 
     /** Sets this string to hold a representation of the given value. */
-    method void setInt(int val) {
+
+    method void setInt(int n) {
+        let len = 0;
+        if (n < 0) {
+            let n = -n;
+            do appendChar(45);
+        } 
+
+        do setInt2(n);
+        return;
+    }
+
+    method void setInt2(int n) {
+        var int nextN;
+
+        if (n < 10) {
+            do appendChar(n+48);
+        } else {
+            let nextN = n / 10;
+            do setInt2(nextN);
+            do appendChar(n - (nextN * 10) + 48);
+        }
+
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }

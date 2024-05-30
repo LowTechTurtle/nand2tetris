@@ -18,17 +18,18 @@ class Output {
 
     // Character map for displaying characters
     static Array charMaps; 
+    static int x, y;
 
-    /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
+        do Output.initMap();
+        let x = 0;
+        let y = 0;
+        return;
     }
 
-    // Initializes the character map array
     function void initMap() {
         var int i;
-    
         let charMaps = Array.new(127);
-        
         // Black square, used for displaying non-printable characters.
         do Output.create(0,63,63,63,63,63,63,63,63,63,0,0);
 
@@ -52,8 +53,7 @@ class Output {
         do Output.create(46,0,0,0,0,0,0,0,12,12,0,0);        // .    
         do Output.create(47,0,0,32,48,24,12,6,3,1,0,0);      // /
         
-        do Output.create(48,12,30,51,51,51,51,51,30,12,0,0); // 0
-        do Output.create(49,12,14,15,12,12,12,12,12,63,0,0); // 1
+        do Output.create(48,12,14,15,12,12,12,12,12,63,0,0); // 1
         do Output.create(50,30,51,48,24,12,6,3,51,63,0,0);   // 2
         do Output.create(51,30,51,48,48,28,48,48,51,30,0,0); // 3
         do Output.create(52,16,24,28,26,25,63,24,24,60,0,0); // 4
@@ -174,30 +174,72 @@ class Output {
     }
 
     /** Moves the cursor to the j-th column of the i-th row,
-     *  and erases the character displayed there. */
+     *  and erases the character displayed there. 
+     *  btw the character is 11 pixels high and 8 pixels wide, screen begin from ram 16384
+     */
     function void moveCursor(int i, int j) {
+        let x = i;
+        let y = j;
+        do Output.printChar(32);
+        return;
     }
 
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
+        var int px, py, i, addr;
+        var Array arr;
+        let px = x * 8;
+        let py = y * 11;
+        let i = 0;
+        let arr = Output.getMap(c);
+        let addr = 16384;
+        let addr = addr + (px/16);
+        let addr = addr + (py*32);
+        while (i < 11) {
+            do Memory.poke(16384+(px/16)+(py*32), arr[i]);
+            let addr = addr + 32;
+        }
+        let x = x + 1;
+        if (x = 64) {
+            let x = 0;
+            let y = y + 1;
+        }
+        return;
     }
 
     /** displays the given string starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printString(String s) {
+        var int len, i;
+        let len = s.length();
+        let i = 0;
+        while (i < len) {
+            do Output.printChar(s[i]);
+        }
+        return;
     }
 
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printInt(int i) {
+        var String s;
+        do s.setInt(i);
+        do Output.printString(s);
+        return;
     }
 
     /** Advances the cursor to the beginning of the next line. */
     function void println() {
+        let x = 0;
+        let y = y + 1;
+        return;
     }
 
     /** Moves the cursor one column back. */
     function void backSpace() {
+        do Output.printChar(32);
+        let x = x - 1;
+        return;
     }
 }

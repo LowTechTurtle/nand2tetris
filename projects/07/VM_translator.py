@@ -48,7 +48,6 @@ class VMTranslator(object):
                 self.file_out.write(f"@{x} \nD=M \n@{self.SP} \nM=D \n@0 \nM=M+1")
             
             elif segment == "pointer":
-                print("pointer pushed")
                 if index == 0:
                     self.file_out.write(f"@{3} \nD=M \n@{self.SP}\n M=D \n@0 \nM=M+1")
                 if index == 1:
